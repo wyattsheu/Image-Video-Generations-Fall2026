@@ -8,3 +8,8 @@ results/
 outputs
 samples/
 .DS_Store
+.venv/
+venv/
+*.log
+.vscode/
+.idea/
