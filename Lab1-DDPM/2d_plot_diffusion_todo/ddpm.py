@@ -126,7 +126,7 @@ class DiffusionModule(nn.Module):
         # 2. Posterior mean
         mu_theta =  (xt - eps_factor * eps_theta)/torch.sqrt(alpha_t)
         # 3. Posterior variance
-        sigma_theta = torch.sqrt(beta_t ) 
+        sigma_theta = torch.sqrt((1 - alpha_bar_t_prev) / (1 - alpha_bar_t) * beta_t)
         # 4. Reverse step
         z = torch.randn_like(xt)
         z[t.squeeze() == 0] = 0

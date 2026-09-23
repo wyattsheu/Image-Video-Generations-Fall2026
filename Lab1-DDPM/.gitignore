@@ -13,3 +13,5 @@ venv/
 *.log
 .vscode/
 .idea/
+image_diffusion_todo/run_all.sh
+image_diffusion_todo/wait_and_launch.sh
