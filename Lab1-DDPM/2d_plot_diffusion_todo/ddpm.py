@@ -87,7 +87,8 @@ class DiffusionModule(nn.Module):
         # DO NOT change the code outside this part.
         # Compute xt.
         alphas_prod_t = extract(self.var_scheduler.alphas_cumprod, t, x0)
-        xt = x0
+        # 根據公式 x_t = sqrt(ᾱ_t) * x_0 + sqrt(1 - ᾱ_t) * noise
+        xt = torch.sqrt(alphas_prod_t) * x0 + torch.sqrt(1 - alphas_prod_t) * noise
 
         #######################
 
@@ -108,6 +109,8 @@ class DiffusionModule(nn.Module):
         # compute x_t_prev.
         if isinstance(t, int):
             t = torch.tensor([t]).to(self.device)
+        else:
+            t = t.to(self.device)
         eps_factor = (1 - extract(self.var_scheduler.alphas, t, xt)) / (
             1 - extract(self.var_scheduler.alphas_cumprod, t, xt)
         ).sqrt()
@@ -119,13 +122,15 @@ class DiffusionModule(nn.Module):
         alpha_bar_t_prev = extract(self.var_scheduler.alphas_cumprod, t_prev, xt) # \bar{α}_{t-1}
 
         # 1. predict noise
-        
+        eps_theta=self.network(xt, t)
         # 2. Posterior mean
-        
+        mu_theta =  (xt - eps_factor * eps_theta)/torch.sqrt(alpha_t)
         # 3. Posterior variance
-        
+        sigma_theta = torch.sqrt(beta_t ) 
         # 4. Reverse step
-        
+        z = torch.randn_like(xt)
+        z[t.squeeze() == 0] = 0
+        x_t_prev = mu_theta + sigma_theta * z
         #######################
         return x_t_prev
 
@@ -143,7 +148,9 @@ class DiffusionModule(nn.Module):
         # DO NOT change the code outside this part.
         # sample x0 based on Algorithm 2 of DDPM paper.
         xt = torch.randn(shape).to(self.device)
-        x0_pred = None
+        for t in self.var_scheduler.timesteps:
+            xt = self.p_sample(xt, t)
+        x0_pred = xt
         
         ######################
         return x0_pred
@@ -232,12 +239,13 @@ class DiffusionModule(nn.Module):
             .long()
         )
         # 2) get GT noise, and use q_sample to get x_t
-        
+        noise = torch.randn_like(x0)
+        xt = self.q_sample(x0, t, noise)
         # 3) predict noise 
-        
+        noise_pred = self.network(xt, t)
         # 4) MSE loss (eps, eps_pred)
+        loss = F.mse_loss(noise, noise_pred)
         
-        loss = None
 
         ######################
         return loss
