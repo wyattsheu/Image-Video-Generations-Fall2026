@@ -15,3 +15,5 @@ venv/
 .idea/
 image_diffusion_todo/run_all.sh
 image_diffusion_todo/wait_and_launch.sh
+image_diffusion_todo/retrain_linear_noise.sh
+image_diffusion_todo/logs/
